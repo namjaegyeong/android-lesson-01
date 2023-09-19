@@ -25,7 +25,7 @@ public class AWSService {
     public void initAWSAPI(AWSKeyDto awsKey) {
         s3Client = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(awsKey.getApiKey(), awsKey.getApiSecretKey())))
-                .withRegion(Regions.AP_NORTHEAST_2)
+                .withRegion(Regions.US_EAST_1)
                 .build();
         for (Bucket bucket : s3Client.listBuckets()) {
             if (bucket.getName().startsWith("easw-random-bucket-"))
