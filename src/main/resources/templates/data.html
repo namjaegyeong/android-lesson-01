@@ -19,7 +19,15 @@
             for (let i = 0; i < result.length; i++) {
                 let li = document.createElement("li");
                 li.appendChild(document.createTextNode(result[i]));
+
+                let a = document.createElement('a');
+                let linkText = document.createTextNode("download link");
+                a.appendChild(linkText);
+                a.title = "download link";
+                a.href = `http://localhost:8080/api/v1/rest/aws/download/${result[i]}`;
+
                 document.getElementById("fileList").appendChild(li);
+                document.getElementById("fileList").appendChild(a);
             }
         })()
 
