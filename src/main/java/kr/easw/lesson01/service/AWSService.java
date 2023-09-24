@@ -1,11 +1,13 @@
 package kr.easw.lesson01.service;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import kr.easw.lesson01.model.dto.AWSKeyDto;
@@ -28,10 +30,25 @@ public class AWSService {
                 .withRegion(Regions.US_EAST_1)
                 .build();
         for (Bucket bucket : s3Client.listBuckets()) {
-            if (bucket.getName().startsWith("easw-random-bucket-"))
-                s3Client.deleteBucket(bucket.getName());
+            if (bucket.getName().startsWith("easw-random-bucket-")){
+                deleteS3Bucket(bucket.getName());
+            }
         }
         s3Client.createBucket(BUCKET_NAME);
+    }
+
+    // Delete the s3 bucket function for unversioned buckets.
+    // After deleting all of the object from s3 bucket, finally delete the s3 bucket.
+    public void deleteS3Bucket(String bucketName) {
+        try {
+            ObjectListing objectListing = s3Client.listObjects(bucketName);
+            for (S3ObjectSummary s3ObjectSummary : objectListing.getObjectSummaries()) {
+                s3Client.deleteObject(bucketName, s3ObjectSummary.getKey());
+            }
+            s3Client.deleteBucket(bucketName);
+        } catch (SdkClientException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean isInitialized() {
