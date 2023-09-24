@@ -62,6 +62,7 @@ public class AWSController {
         }
     }
 
+    // Depending on the file type, add Content-Type to the header.
     private HttpHeaders getHeaders(
             byte[] bytes,
             String fileName

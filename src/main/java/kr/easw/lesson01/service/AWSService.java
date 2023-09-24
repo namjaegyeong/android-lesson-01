@@ -6,18 +6,16 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.IOUtils;
 import kr.easw.lesson01.model.dto.AWSKeyDto;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
-import java.util.UUID;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 public class AWSService {
@@ -48,6 +46,23 @@ public class AWSService {
             s3Client.deleteBucket(bucketName);
         } catch (SdkClientException e) {
             e.printStackTrace();
+        }
+    }
+
+    // Convert S3ObjectInputStream to byte[] due to file transfer.
+    public byte[] getS3Object(String key) {
+        S3Object fullObject = null;
+
+        System.out.println("Downloading an object");
+        try {
+            fullObject = s3Client.getObject(new GetObjectRequest(BUCKET_NAME, key));
+            System.out.println("Content-Type: " + fullObject.getObjectMetadata().getContentType());
+
+            return IOUtils.toByteArray(fullObject.getObjectContent());
+        } catch (AmazonS3Exception | IOException e) {
+            e.printStackTrace();
+
+            return null;
         }
     }
 
