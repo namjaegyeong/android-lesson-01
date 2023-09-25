@@ -1,5 +1,6 @@
 package kr.easw.lesson01.service;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -9,13 +10,17 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
 import kr.easw.lesson01.model.dto.AWSKeyDto;
+import kr.easw.lesson01.model.dto.DownloadLinkDto;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.net.URL;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AWSService {
@@ -28,7 +33,7 @@ public class AWSService {
                 .withRegion(Regions.US_EAST_1)
                 .build();
         for (Bucket bucket : s3Client.listBuckets()) {
-            if (bucket.getName().startsWith("easw-random-bucket-")){
+            if (bucket.getName().startsWith("easw-random-bucket-")) {
                 deleteS3Bucket(bucket.getName());
             }
         }
@@ -71,11 +76,36 @@ public class AWSService {
     }
 
     public List<String> getFileList() {
-        return s3Client.listObjects(BUCKET_NAME).getObjectSummaries().stream().map(S3ObjectSummary::getKey).toList();
+        List<String> fileList = s3Client.listObjects(BUCKET_NAME).getObjectSummaries().stream().map(S3ObjectSummary::getKey).toList();
+        fileList.forEach(it -> System.out.println(getPreSignedUrl(it)));
+        return fileList;
     }
 
     @SneakyThrows
     public void upload(MultipartFile file) {
         s3Client.putObject(BUCKET_NAME, file.getOriginalFilename(), new ByteArrayInputStream(file.getResource().getContentAsByteArray()), new ObjectMetadata());
+    }
+
+    // For a limited time, users can access S3 Pre-Signed URL.
+    public DownloadLinkDto getPreSignedUrl(String key){
+        String preSignedURL = "";
+
+        Date expiration = new Date();
+        long expTimeMillis = expiration.getTime();
+        expTimeMillis += 1000 * 60 * 60 * 24;
+        expiration.setTime(expTimeMillis);
+
+        try {
+            GeneratePresignedUrlRequest generatePresignedUrlRequest =
+                    new GeneratePresignedUrlRequest(BUCKET_NAME, key)
+                            .withMethod(HttpMethod.GET)
+                            .withExpiration(expiration);
+            URL url = s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+            preSignedURL = url.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new DownloadLinkDto(preSignedURL);
     }
 }

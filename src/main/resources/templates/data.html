@@ -20,11 +20,16 @@
                 let li = document.createElement("li");
                 li.appendChild(document.createTextNode(result[i]));
 
+                const response2 = await fetch(`api/v1/rest/aws/${result[i]}`);
+                const result2 = await response2.json();
+
+                console.log(result2);
+
                 let a = document.createElement('a');
                 let linkText = document.createTextNode("download link");
                 a.appendChild(linkText);
                 a.title = "download link";
-                a.href = `http://localhost:8080/api/v1/rest/aws/download/${result[i]}`;
+                a.href = result2.link;
 
                 document.getElementById("fileList").appendChild(li);
                 document.getElementById("fileList").appendChild(a);

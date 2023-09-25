@@ -1,6 +1,7 @@
 package kr.easw.lesson01.controller.rest;
 
 import kr.easw.lesson01.model.dto.AWSKeyDto;
+import kr.easw.lesson01.model.dto.DownloadLinkDto;
 import kr.easw.lesson01.service.AWSService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -51,6 +52,17 @@ public class AWSController {
         );
     }
 
+    @GetMapping("/{file}")
+    public ResponseEntity<DownloadLinkDto> onPreSignedUrl(
+            @PathVariable("file") String fileName
+    ) {
+        return new ResponseEntity<>(
+                awsController.getPreSignedUrl(fileName),
+                getJsonHeader(),
+                HttpStatus.OK
+        );
+    }
+
     @PostMapping("/upload")
     private ModelAndView onUpload(@RequestParam MultipartFile file) {
         try {
@@ -71,6 +83,12 @@ public class AWSController {
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentLength(bytes.length);
         headers.setContentDispositionFormData("attachment", fileName);
+        return headers;
+    }
+
+    private HttpHeaders getJsonHeader() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
         return headers;
     }
 }
